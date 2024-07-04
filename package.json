@@ -1,0 +1,11 @@
+{
+  "name": "api-node",
+  "version": "1.0.0",
+  "description": "API Autentificación de usuario",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Onairo Pérez",
+  "license": "ISC"
+}
