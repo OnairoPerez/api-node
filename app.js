@@ -1,12 +1,18 @@
 const express = require('express');
 const app = express();
 
+const PORT = 4000;
+
 //Modulo database
 require('./database/connection')
 
-const PORT = 4000
+//Routers
+const auth = require('./routers/auth');
 
-app.get('/api', (req, res) => {
+//Configuración de routers
+app.use('/api', auth);
+
+app.get('/', (req, res) => {
   res.send('API en funcionamiento');
 });
 
