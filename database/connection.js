@@ -6,18 +6,22 @@ const uri = process.env.mongodb_uri;
 
 //Realiza la conexión
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
-async function run() {
-  try {
-    await mongoose.connect(uri, clientOptions);
-    await mongoose.connection.db.admin().command({ ping: 1 });
-    console.log(`
+const database = mongoose.connection;
+mongoose.connect(uri, clientOptions)
+  //Mostrar errores que ocurren al realizar la conexión
+  .catch(error => console.log('[MongoDB] Error de conexión', error)); 
+
+//Evento open para verificar la conexión con la base de datos
+database.on('open', _ => {
+  console.log(`
     -----------------------
         Conexión exitosa 
             MongoDB
     -----------------------`
-    );
-  } finally {
-    await mongoose.disconnect();
-  }
-}
-run().catch(console.dir);
+  );
+});
+
+//Evento error para verificar si ocurre un error en tiempo de ejecución 
+database.on('error', (error) => {
+  console.log('[MongoDB] Error de procesamiento', error);
+});
