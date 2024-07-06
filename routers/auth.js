@@ -58,4 +58,30 @@ router.post('/register', (req, res) => {
     });
 });
 
+router.post('/auth', (req, res) => {
+  const body = req.body;
+
+	//Datos
+	const email = body.email;
+	const password = body.password;
+
+  if (check(email) || check(password)) {
+    res.status(400).send(sms('Customer request is invalid due to missing or incorrect data'));
+    return;
+  }
+
+  Auth.findOne({email: email}).exec()
+    .then(document => {
+      if(document) {
+        if (compareSync(password, document.password)) {
+          res.send(sms('login susscefull'));
+        } else {
+          res.status(401).send(sms('Incorrect password'));
+        }
+      } else {
+        res.status(404).send(sms('Incorrect email or unregistered account'));
+      }
+    });
+})
+
 module.exports = router;
