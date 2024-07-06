@@ -24,41 +24,8 @@ function check(variable, datatype = 'string') {
   }
 }
 
-router.post('/register', (req, res) => {
-	const body = req.body;
-
-	//Datos
-	const email = body.email;
-	const password = body.password;
-
-  if (check(email) || check(password)) {
-    res.status(400).send(sms('Customer request is invalid due to missing or incorrect data'));
-    return;
-  }
-
-  //Hash para la contraseña
-  const salt = genSaltSync(10);
-  const hash = hashSync(password, salt);
-
-  const account = new Auth({
-    email: email,
-    password: hash
-  });
-
-  
-  account.save()
-    .then(document => {
-      let message = sms('successful save');
-      message['document'] = document;
-      res.send(message);
-    })
-    .catch(() => {
-      res.status(500).send(sms('Internal Server Error'));
-      return;
-    });
-});
-
-router.post('/auth', (req, res) => {
+//Procesar los datos del body enviados en la petición
+function body(req, res) {
   const body = req.body;
 
 	//Datos
@@ -67,21 +34,56 @@ router.post('/auth', (req, res) => {
 
   if (check(email) || check(password)) {
     res.status(400).send(sms('Customer request is invalid due to missing or incorrect data'));
-    return;
+    return null;
   }
 
-  Auth.findOne({email: email}).exec()
-    .then(document => {
-      if(document) {
-        if (compareSync(password, document.password)) {
-          res.send(sms('login susscefull'));
-        } else {
-          res.status(401).send(sms('Incorrect password'));
-        }
-      } else {
-        res.status(404).send(sms('Incorrect email or unregistered account'));
-      }
+  return {email:email, password:password}
+}
+
+router.post('/register', (req, res) => {
+	const data = body(req, res);
+  if (data != null) {
+    const {email, password} = data;
+    //Hash para la contraseña
+    const salt = genSaltSync(10);
+    const hash = hashSync(password, salt);
+
+    const account = new Auth({
+      email: email,
+      password: hash
     });
+
+    //Guardar el documento
+    account.save()
+      .then(() => {
+        res.send(sms('successful save'));
+      })
+      .catch(() => {
+        res.status(500).send(sms('Internal Server Error'));
+        return;
+      });
+  }
+});
+
+router.post('/auth', (req, res) => {
+  const data = body(req, res);
+  if (data != null) {
+    const {email, password} = data;
+    //Buscar el documento en al base de datos por email
+    Auth.findOne({email: email}).exec()
+      .then(document => {
+        if(document) {
+          //Verificar la contraseña
+          if (compareSync(password, document.password)) {
+            res.send(sms('login susscefull'));
+          } else {
+            res.status(401).send(sms('Incorrect password'));
+          }
+        } else {
+          res.status(404).send(sms('Incorrect email or unregistered account'));
+        }
+      });
+  }
 })
 
 module.exports = router;
