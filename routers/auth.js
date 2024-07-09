@@ -48,20 +48,29 @@ router.post('/register', (req, res) => {
     const salt = genSaltSync(10);
     const hash = hashSync(password, salt);
 
-    const account = new Auth({
-      email: email,
-      password: hash
-    });
-
-    //Guardar el documento
-    account.save()
-      .then(() => {
-        res.send(sms('successful save'));
+    //Buscar el documento en al base de datos por email
+    Auth.findOne({email: email}).exec()
+      .then(document => {
+        if (document) {
+          res.status(409).send(sms('Account already exists'));
+        } else {
+          //Se crea el objeto cuenta
+          const account = new Auth({
+            email: email,
+            password: hash
+          });
+      
+          //Guardar el documento
+          account.save()
+            .then(() => {
+              res.send(sms('successful save'));
+            })
+            .catch(() => {
+              res.status(500).send(sms('Internal Server Error'));
+              return;
+            });
+        }
       })
-      .catch(() => {
-        res.status(500).send(sms('Internal Server Error'));
-        return;
-      });
   }
 });
 
